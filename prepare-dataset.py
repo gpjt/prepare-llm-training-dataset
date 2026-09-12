@@ -18,23 +18,27 @@ class DataSource:
         self.tokens_desired = 0
         self.tokens_used = 0
 
-        self.iterator = None
+        self.create_iterator()
 
 
-    def get_iterator(self):
-        if self.iterator is None:
-            dataset = load_dataset(
-                self.hf_id,
-                name=self.hf_name,
-                split=self.hf_split,
-                streaming=True
-            )
-            self.iterator = iter(dataset)
-        return self.iterator
+    def create_iterator(self):
+        dataset = load_dataset(
+            self.hf_id,
+            name=self.hf_name,
+            split=self.hf_split,
+            streaming=True
+        )
+        self.iterator = iter(dataset)
 
 
     def __next__(self):
-        return next(self.get_iterator())[self.item_field]
+        try:
+            item = next(self.iterator)
+        except StopIteration:
+            self.create_iterator()
+            item = next(self.iterator)
+
+        return item[self.item_field]
 
 
 
