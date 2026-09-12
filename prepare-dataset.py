@@ -1,9 +1,12 @@
+from datetime import datetime
+
 from tqdm import tqdm
 
 import tiktoken
 import torch
 
 from datasets import load_dataset
+from safetensors.torch import save_file
 
 
 class DataSource:
@@ -68,6 +71,10 @@ sources = [
 
 
 
+def log(s):
+    print(f"{datetime.now()}: {s}")
+
+
 
 def main():
     total_tokens_desired = 10_000_000_000
@@ -78,11 +85,11 @@ def main():
         "Simple English Wikipedia": 10
     }
     total_ratios = sum(v for v in ratios.values())
-    print("Generating dataset; per-source counts")
+    log("Generating dataset; per-source counts")
     for source in sources:
         adjusted_ratio = ratios[source.name] / total_ratios
         source.tokens_desired = int(total_tokens_desired * adjusted_ratio)
-        print(f"{source.name}: {source.tokens_desired:,d}")
+        log(f"{source.name}: {source.tokens_desired:,d}")
 
     tqdms = {}
     for source in sources:
@@ -120,14 +127,25 @@ def main():
             torch.tensor(tokens, dtype=torch.uint16)
         )
 
-    print("\n\n\nDone generating tokens")
+    for t in tqdms.values():
+        t.close()
+
+    log("\n\n\nDone generating tokens")
     for source in sources:
         ratio = source.tokens_used / source.tokens_desired
-        print(f"{source.name}: {source.tokens_used:,d} / {source.tokens_desired:,d} ({ratio:.3f})")
-    print(f"Total: {total_tokens_generated:,d}")
+        log(f"{source.name}: {source.tokens_used:,d} / {source.tokens_desired:,d} ({ratio:.3f})")
+    log(f"Total: {total_tokens_generated:,d}")
 
+    log("Catting...")
+    result = torch.cat(generated_tokens)
+    generated_tokens = None
+    log(f"Catted into a tensor of shape {result.shape}")
 
-    print("done")
+    log("Saving...")
+    save_file({"tokens": result}, "./foo.safetensors")
+    log("Saved")
+
+    log("Done")
 
 
 if __name__ == "__main__":
