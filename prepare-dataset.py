@@ -110,7 +110,7 @@ def main():
         text = next(source)
         print(repr(text))
 
-        tokens = tokenizer.encode(text)
+        tokens = tokenizer.encode(text, allowed_special={'<|endoftext|>'})
         tokens.append(tokenizer.eot_token)
 
         token_count = len(tokens)
