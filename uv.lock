@@ -1054,6 +1054,7 @@ dependencies = [
     { name = "datasets" },
     { name = "tiktoken" },
     { name = "torch" },
+    { name = "tqdm" },
 ]
 
 [package.metadata]
@@ -1061,6 +1062,7 @@ requires-dist = [
     { name = "datasets", specifier = ">=5.0.1" },
     { name = "tiktoken", specifier = ">=0.14.0" },
     { name = "torch", specifier = ">=2.14.0" },
+    { name = "tqdm", specifier = ">=4.70.1" },
 ]
 
 [[package]]

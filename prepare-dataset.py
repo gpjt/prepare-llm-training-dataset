@@ -1,3 +1,5 @@
+from tqdm import tqdm
+
 import tiktoken
 import torch
 
@@ -78,6 +80,14 @@ def main():
         source.tokens_desired = int(total_tokens_desired * adjusted_ratio)
         print(f"{source.name}: {source.tokens_desired:,d}")
 
+    tqdms = {}
+    for source in sources:
+        tqdms[source.name] = tqdm(
+            desc=source.name,
+            total=source.tokens_desired,
+            unit="token"
+        )
+
     tokenizer = tiktoken.get_encoding("gpt2")
     total_tokens_generated = 0
     generated_tokens = []
@@ -101,12 +111,14 @@ def main():
 
         token_count = len(tokens)
         source.tokens_used += token_count
+        tqdms[source.name].update(token_count)
         total_tokens_generated += token_count
 
         generated_tokens.append(
             torch.tensor(tokens, dtype=torch.uint16)
         )
 
+    print("\n\n\nDone generating tokens")
     for source in sources:
         ratio = source.tokens_used / source.tokens_desired
         print(f"{source.name}: {source.tokens_used} / {source.tokens_desired} ({ratio:.3f})")
