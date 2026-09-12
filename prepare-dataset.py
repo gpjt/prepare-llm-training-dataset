@@ -105,10 +105,8 @@ def main():
                 least_tapped_ratio = ratio
 
         source = least_tapped_source
-        print(source.name)
 
         text = next(source)
-        print(repr(text))
 
         tokens = tokenizer.encode(text, allowed_special={'<|endoftext|>'})
         tokens.append(tokenizer.eot_token)
@@ -125,8 +123,8 @@ def main():
     print("\n\n\nDone generating tokens")
     for source in sources:
         ratio = source.tokens_used / source.tokens_desired
-        print(f"{source.name}: {source.tokens_used} / {source.tokens_desired} ({ratio:.3f})")
-    print(f"Total: {total_tokens_generated}")
+        print(f"{source.name}: {source.tokens_used:,d} / {source.tokens_desired:,d} ({ratio:.3f})")
+    print(f"Total: {total_tokens_generated:,d}")
 
 
     print("done")
