@@ -70,7 +70,7 @@ sources = [
 
 
 def main():
-    total_tokens_desired = 10_000_000
+    total_tokens_desired = 10_000_000_000
 
     ratios = {
         "FineWeb": 45,
