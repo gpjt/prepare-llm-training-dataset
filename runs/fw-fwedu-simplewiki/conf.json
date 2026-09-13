@@ -1,6 +1,6 @@
 {
     "seed": 42,
-    "tokens_desired": 10000000,
+    "tokens_desired": 10000000000,
     "upload_dataset_name": "gpjt/fw-fwedu-simplewiki-gpt2-tokens",
     "sources": [
         {
