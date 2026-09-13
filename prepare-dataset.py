@@ -128,7 +128,7 @@ def main(run_dir):
     log(f"Catted into a tensor of shape {result.shape}")
 
     log("Saving...")
-    save_file({"tokens": result}, "./foo.safetensors")
+    save_file({"tokens": result}, run_dir / "dataset.safetensors")
     log("Saved")
 
     log("Done")
