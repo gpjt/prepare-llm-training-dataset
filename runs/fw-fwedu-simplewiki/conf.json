@@ -1,0 +1,30 @@
+{
+    "seed": 42,
+    "tokens_desired": 10000000,
+    "sources": [
+        {
+            "name": "FineWeb",
+            "hf_id": "HuggingFaceFW/fineweb",
+            "hf_name": "sample-10BT",
+            "hf_split": "train",
+            "item_field": "text",
+            "weight": 45
+        },
+        {
+            "name": "FineWeb-Edu",
+            "hf_id": "HuggingFaceFW/fineweb-edu",
+            "hf_name": "sample-10BT",
+            "hf_split": "train",
+            "item_field": "text",
+            "weight": 45
+        },
+        {
+            "name": "Simple English Wikipedia",
+            "hf_id": "answerdotai/simplewiki",
+            "hf_name": "articles",
+            "hf_split": "train",
+            "item_field": "md",
+            "weight": 10
+        }
+    ]
+}
