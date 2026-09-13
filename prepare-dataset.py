@@ -1,3 +1,4 @@
+import random
 from datetime import datetime
 
 from tqdm import tqdm
@@ -20,54 +21,29 @@ class DataSource:
 
         self.tokens_desired = 0
         self.tokens_used = 0
+        self.iterator_restarts = 0
 
-        self.create_iterator()
+        self.restart_iterator()
 
 
-    def create_iterator(self):
+    def restart_iterator(self):
         dataset = load_dataset(
             self.hf_id,
             name=self.hf_name,
             split=self.hf_split,
-            streaming=True
         )
-        self.iterator = iter(dataset)
+        self.iterator = iter(dataset.shuffle(seed=random.randint(0, 1000)))
+        self.iterator_restarts += 1
 
 
     def __next__(self):
         try:
             item = next(self.iterator)
         except StopIteration:
-            self.create_iterator()
+            self.restart_iterator()
             item = next(self.iterator)
 
         return item[self.item_field]
-
-
-
-sources = [
-    DataSource(
-        name="FineWeb",
-        hf_id="HuggingFaceFW/fineweb",
-        hf_name="sample-10BT",
-        hf_split="train",
-        item_field="text",
-    ),
-    DataSource(
-        name="FineWeb-Edu",
-        hf_id="HuggingFaceFW/fineweb-edu",
-        hf_name="sample-10BT",
-        hf_split="train",
-        item_field="text",
-    ),
-    DataSource(
-        name="Simple English Wikipedia",
-        hf_id="answerdotai/simplewiki",
-        hf_name="articles",
-        hf_split="train",
-        item_field="md",
-    ),
-]
 
 
 
@@ -77,7 +53,32 @@ def log(s):
 
 
 def main():
+    random.seed(42)
     total_tokens_desired = 10_000_000_000
+
+    sources = [
+        DataSource(
+            name="FineWeb",
+            hf_id="HuggingFaceFW/fineweb",
+            hf_name="sample-10BT",
+            hf_split="train",
+            item_field="text",
+        ),
+        DataSource(
+            name="FineWeb-Edu",
+            hf_id="HuggingFaceFW/fineweb-edu",
+            hf_name="sample-10BT",
+            hf_split="train",
+            item_field="text",
+        ),
+        DataSource(
+            name="Simple English Wikipedia",
+            hf_id="answerdotai/simplewiki",
+            hf_name="articles",
+            hf_split="train",
+            item_field="md",
+        ),
+    ]
 
     ratios = {
         "FineWeb": 45,
@@ -114,6 +115,10 @@ def main():
         source = least_tapped_source
 
         text = next(source)
+        print(source.name)
+        print(text)
+        import time
+        time.sleep(2)
 
         tokens = tokenizer.encode(text, allowed_special={'<|endoftext|>'})
         tokens.append(tokenizer.eot_token)
@@ -133,7 +138,7 @@ def main():
     log("\n\n\nDone generating tokens")
     for source in sources:
         ratio = source.tokens_used / source.tokens_desired
-        log(f"{source.name}: {source.tokens_used:,d} / {source.tokens_desired:,d} ({ratio:.3f})")
+        log(f"{source.name}: {source.tokens_used:,d} / {source.tokens_desired:,d} ({ratio:.3f}, {source.iterator_restarts} restarts)")
     log(f"Total: {total_tokens_generated:,d}")
 
     log("Catting...")
