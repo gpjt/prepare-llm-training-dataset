@@ -1,8 +1,11 @@
+import json
 import random
 from datetime import datetime
+from pathlib import Path
 
 from tqdm import tqdm
 
+import click
 import tiktoken
 import torch
 
@@ -12,16 +15,17 @@ from safetensors.torch import save_file
 
 class DataSource:
 
-    def __init__(self, name, hf_id, hf_name, hf_split, item_field):
+    def __init__(self, name, hf_id, hf_name, hf_split, item_field, weight):
         self.name = name
         self.hf_id = hf_id
         self.hf_name = hf_name
         self.hf_split = hf_split
         self.item_field = item_field
+        self.weight = weight
 
         self.tokens_desired = 0
         self.tokens_used = 0
-        self.iterator_restarts = 0
+        self.iterators_used = 0
 
         self.restart_iterator()
 
@@ -33,7 +37,7 @@ class DataSource:
             split=self.hf_split,
         )
         self.iterator = iter(dataset.shuffle(seed=random.randint(0, 1000)))
-        self.iterator_restarts += 1
+        self.iterators_used += 1
 
 
     def __next__(self):
@@ -52,44 +56,25 @@ def log(s):
 
 
 
-def main():
-    random.seed(42)
-    total_tokens_desired = 10_000_000_000
+@click.command()
+@click.argument("run_dir")
+def main(run_dir):
+    run_dir = Path(run_dir)
+    with open(run_dir / "conf.json") as f:
+        conf = json.load(f)
+
+    random.seed(conf["seed"])
+    total_tokens_desired = conf["tokens_desired"]
 
     sources = [
-        DataSource(
-            name="FineWeb",
-            hf_id="HuggingFaceFW/fineweb",
-            hf_name="sample-10BT",
-            hf_split="train",
-            item_field="text",
-        ),
-        DataSource(
-            name="FineWeb-Edu",
-            hf_id="HuggingFaceFW/fineweb-edu",
-            hf_name="sample-10BT",
-            hf_split="train",
-            item_field="text",
-        ),
-        DataSource(
-            name="Simple English Wikipedia",
-            hf_id="answerdotai/simplewiki",
-            hf_name="articles",
-            hf_split="train",
-            item_field="md",
-        ),
+        DataSource(**source) for source in conf["sources"]
     ]
 
-    ratios = {
-        "FineWeb": 45,
-        "FineWeb-Edu": 45,
-        "Simple English Wikipedia": 10
-    }
-    total_ratios = sum(v for v in ratios.values())
+    total_weights = sum(s.weight for s in sources)
     log("Generating dataset; per-source counts")
     for source in sources:
-        adjusted_ratio = ratios[source.name] / total_ratios
-        source.tokens_desired = int(total_tokens_desired * adjusted_ratio)
+        ratio = source.weight / total_weights
+        source.tokens_desired = int(total_tokens_desired * ratio)
         log(f"{source.name}: {source.tokens_desired:,d}")
 
     tqdms = {}
@@ -115,10 +100,6 @@ def main():
         source = least_tapped_source
 
         text = next(source)
-        print(source.name)
-        print(text)
-        import time
-        time.sleep(2)
 
         tokens = tokenizer.encode(text, allowed_special={'<|endoftext|>'})
         tokens.append(tokenizer.eot_token)
@@ -138,7 +119,7 @@ def main():
     log("\n\n\nDone generating tokens")
     for source in sources:
         ratio = source.tokens_used / source.tokens_desired
-        log(f"{source.name}: {source.tokens_used:,d} / {source.tokens_desired:,d} ({ratio:.3f}, {source.iterator_restarts} restarts)")
+        log(f"{source.name}: {source.tokens_used:,d} / {source.tokens_desired:,d} ({ratio:.3f}, {source.iterators_used} iterators)")
     log(f"Total: {total_tokens_generated:,d}")
 
     log("Catting...")
