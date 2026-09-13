@@ -134,7 +134,7 @@ def main(run_dir):
     log("Saved")
 
     upload_dataset_name = conf['upload_dataset_name']
-    log("Uploading to {upload_dataset_name}")
+    log(f"Uploading to {upload_dataset_name}")
     api = HfApi()
     api.create_repo(
         repo_id=upload_dataset_name,
