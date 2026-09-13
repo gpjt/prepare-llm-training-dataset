@@ -10,6 +10,7 @@ import tiktoken
 import torch
 
 from datasets import load_dataset
+from huggingface_hub import HfApi
 from safetensors.torch import save_file
 
 
@@ -128,8 +129,24 @@ def main(run_dir):
     log(f"Catted into a tensor of shape {result.shape}")
 
     log("Saving...")
-    save_file({"tokens": result}, run_dir / "dataset.safetensors")
+    safetensors_file = run_dir / "train.safetensors"
+    save_file({"tokens": result}, safetensors_file)
     log("Saved")
+
+    upload_dataset_name = conf['upload_dataset_name']
+    log("Uploading to {upload_dataset_name}")
+    api = HfApi()
+    api.create_repo(
+        repo_id=upload_dataset_name,
+        repo_type="dataset",
+        exist_ok=True,
+    )
+    api.upload_file(
+        path_or_fileobj=safetensors_file,
+        path_in_repo=safetensors_file.name,
+        repo_id=upload_dataset_name,
+        repo_type="dataset"
+    )
 
     log("Done")
 

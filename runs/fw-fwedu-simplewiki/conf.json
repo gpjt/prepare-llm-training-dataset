@@ -1,6 +1,7 @@
 {
     "seed": 42,
     "tokens_desired": 10000000,
+    "upload_dataset_name": "gpjt/fw-fwedu-simplewiki",
     "sources": [
         {
             "name": "FineWeb",
