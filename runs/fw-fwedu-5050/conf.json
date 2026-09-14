@@ -1,0 +1,23 @@
+{
+    "seed": 42,
+    "tokens_desired": 10000000000,
+    "upload_dataset_name": "gpjt/fw-fwedu-5050-gpt2-tokens",
+    "sources": [
+        {
+            "name": "FineWeb",
+            "hf_id": "HuggingFaceFW/fineweb",
+            "hf_name": "sample-10BT",
+            "hf_split": "train",
+            "item_field": "text",
+            "weight": 50
+        },
+        {
+            "name": "FineWeb-Edu",
+            "hf_id": "HuggingFaceFW/fineweb-edu",
+            "hf_name": "sample-10BT",
+            "hf_split": "train",
+            "item_field": "text",
+            "weight": 50
+        }
+    ]
+}
