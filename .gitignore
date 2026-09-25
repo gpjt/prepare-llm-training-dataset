@@ -1,4 +1,5 @@
 my_validation_set.txt
+my_test_set.txt
 runs/*/*.safetensors
 
 # Byte-compiled / optimized / DLL files

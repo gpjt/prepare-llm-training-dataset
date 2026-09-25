@@ -15,7 +15,13 @@ from dataset_contamination_helpers import hash_doc
 @click.argument("forbidden_dataset")
 @click.argument("forbidden_split")
 @click.argument("forbidden_hashes_output_file")
-def main(forbidden_dataset, forbidden_split, forbidden_hashes_output_file):
+@click.option("--start_token", default=0, type=int)
+@click.option("--num_tokens", default=None, type=int)
+def main(
+    forbidden_dataset, forbidden_split,
+    forbidden_hashes_output_file,
+    start_token, num_tokens,
+):
     split_filename = f"{forbidden_split}.safetensors"
     with tempfile.TemporaryDirectory() as ds_dir:
         snapshot_download(
@@ -32,6 +38,7 @@ def main(forbidden_dataset, forbidden_split, forbidden_hashes_output_file):
 
     tokenizer = tiktoken.get_encoding("gpt2")
     this_doc = []
+    tokens_seen = 0
     print("Generating hash file...")
     with open(forbidden_hashes_output_file, "w") as f:
         for tok in tqdm(tokens.numpy()):
@@ -39,10 +46,13 @@ def main(forbidden_dataset, forbidden_split, forbidden_hashes_output_file):
                 if len(this_doc) < 10:
                     raise Exception(f"Unexpectedly short doc: {tokenizer.decode(this_doc)!r}")
 
-                f.write(f"{hash_doc(this_doc)} {len(this_doc)}\n")
+                if start_token < tokens_seen:
+                    if num_tokens is None or (tokens_seen - len(this_doc)) - start_token < num_tokens:
+                        f.write(f"{hash_doc(this_doc)} {len(this_doc)}\n")
                 this_doc = []
             else:
                 this_doc.append(tok)
+            tokens_seen += 1
 
 
 if __name__ == "__main__":

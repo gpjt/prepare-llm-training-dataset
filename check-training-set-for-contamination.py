@@ -15,7 +15,8 @@ from dataset_contamination_helpers import hash_doc
 @click.argument("dataset")
 @click.argument("split")
 @click.argument("forbidden_hashes_input_file")
-def main(dataset, split, forbidden_hashes_input_file):
+@click.option("--num_tokens", default=None, type=int)
+def main(dataset, split, forbidden_hashes_input_file, num_tokens):
     split_filename = f"{split}.safetensors"
     with tempfile.TemporaryDirectory() as ds_dir:
         snapshot_download(
@@ -44,14 +45,18 @@ def main(dataset, split, forbidden_hashes_input_file):
     this_doc = []
     contaminations = set()
     print("Checking...")
+    tokens_seen = 0
     for tok in tqdm(tokens.numpy()):
         if tok == tokenizer.eot_token:
             digest = hash_doc(this_doc)
             if digest in forbidden:
                 contaminations.add((digest, forbidden[digest]))
+            if num_tokens is not None and tokens_seen + 1 >= num_tokens:
+                break
             this_doc = []
         else:
             this_doc.append(tok)
+        tokens_seen += 1
 
     if len(contaminations) == 0:
         print("DATASET CLEAN")
